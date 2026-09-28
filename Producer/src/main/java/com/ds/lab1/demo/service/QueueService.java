@@ -31,6 +31,7 @@ public class QueueService {
         String now = Timestamp.from(Instant.now()).toString();
 
         Message task = new Message(requestId, message.getText(), now);
+        System.out.println("Sending request to message queue: " + task.getId() + " " + task.getText());
         rabbitTemplate.convertAndSend(
                 "task_queue",
                 task,
@@ -46,10 +47,12 @@ public class QueueService {
     }
 
     public String getResult(String id) {
+        System.out.println("Getting result for: " + id);
         return results.get(id).equals("Error")? "Error" : results.get(id).isEmpty() ? "Processing" : "Completed";
     }
 
     public void storeResult(String id, String result) {
+        System.out.println("Storing result for: " + id + " result:" + result);
         results.put(id, result);
     }
 }
