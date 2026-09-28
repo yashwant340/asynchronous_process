@@ -6,7 +6,6 @@ import com.ds.lab1.demo.wrapper.MessageWrapper;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api")
 public class PromptController {
 
     private final QueueService queueService;
