@@ -11,5 +11,4 @@ import lombok.Setter;
 @NoArgsConstructor
 public class MessageWrapper {
     private String text;
-
 }
