@@ -26,7 +26,7 @@ public class ConsumerService {
     private static final String RETRY_COUNT_HEADER = "x-retry-count";
     private static final int MAX_RETRIES = 2;
 
-    private static final String OLLAMA_URL = "http://localhost:11434/api/generate";
+    private static final String OLLAMA_URL = "http://localhost:11435/api/generate";
     private static final String OLLAMA_MODEL = "llama3.2:1b";
 
     private final ObjectMapper mapper = new ObjectMapper();
@@ -50,6 +50,7 @@ public class ConsumerService {
 
         String answer;
         try {
+            System.out.println("Processing request:" + id + " " + text);
             Thread.sleep(3000);
             answer = callOllama(text);
 
@@ -61,7 +62,7 @@ public class ConsumerService {
 
             Object retryHeader = message.getMessageProperties().getHeaders().get(RETRY_COUNT_HEADER);
             int retryCount = retryHeader instanceof Number number ? number.intValue() : 0;
-
+            System.out.println("Retrying the following request:" + message +"Retry count for:" + retryCount);
             if (retryCount < MAX_RETRIES) {
                 Message retryMessage = MessageBuilder.fromMessage(message)
                         .setHeader(RETRY_COUNT_HEADER, retryCount + 1)
@@ -71,6 +72,7 @@ public class ConsumerService {
 
             } else {
                 try {
+                    System.out.println("Max retries completed for request:" + message);
                     sendToProducer(id, "Error");
                 } catch (Exception callbackFailure) {
                     System.out.println("[consumer] could not report final failure for " + id
@@ -92,11 +94,12 @@ public class ConsumerService {
                 "prompt", text,
                 "stream", false
         );
-
+        System.out.println("Calling ollama with prompt: " + body.get("prompt"));
         Map<String, Object> response = restTemplate.postForObject(
                 OLLAMA_URL, new HttpEntity<>(body, headers), Map.class);
 
         if (response == null || response.get("response") == null) {
+            System.out.println("Ollama returned no answer");
             throw new RuntimeException("Ollama returned no answer");
         }
 
@@ -107,6 +110,8 @@ public class ConsumerService {
     private void sendToProducer(String id, String result) {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.TEXT_PLAIN);
+
+        System.out.println("Sending result to producer: " + result);
         restTemplate.postForEntity(producerResultUrl, new HttpEntity<>(result, headers), Void.class, id);
     }
 
